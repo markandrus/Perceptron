@@ -36,10 +36,17 @@ main = do
               } = opts 
 
   when verbose (hPutStrLn stderr "# Parsing vectors and labels")
-  vs <- fmap (map (V.fromList . map (\x -> read [x] :: Double)) . lines) inputVectors
+  vs <- fmap ( map (V.fromList . map (\x -> read [x] :: Double) . filter (/= ' '))
+             . lines) inputVectors
   ls <- fmap (map (\x -> read x :: Int) . lines) inputLabels
   let examples = zip vs ls
-  when verbose (hPutStrLn stderr $ show examples)
-  let (State (w:_) _) = perceptron sigma examples
-  when verbose (do hPutStrLn stderr "# Learned weight vector"
-                   hPutStrLn stderr $ show w)
+  let n = V.length . fst $ head examples
+  when verbose (hPutStrLn stderr $ "# Counted " ++ (show $ length examples) ++ " examples of "
+                                ++ (show n) ++ "-dimensional vectors")
+  let (State (w:_) pts) = perceptron sigma examples
+  let n = V.length w
+  when verbose (do hPutStrLn stderr $ "# Learned " ++ (show n) ++ "-dimensional weight vector"
+--                   hPutStrLn stderr $ show w)
+               )
+  let mistakes = foldl (\c (y,y') -> if y /= y' then c+1 else c) 0 pts
+  when verbose (hPutStrLn stderr $ "# Made " ++ (show mistakes) ++ " mistakes")
