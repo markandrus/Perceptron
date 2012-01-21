@@ -22,8 +22,8 @@ data Options = Options { optVerbose :: Bool
 
 startOptions :: Options
 startOptions = Options { optVerbose = False
-                       , optInputVectors = getContents
-                       , optInputLabels = getContents
+                       , optInputVectors = return ""
+                       , optInputLabels = return ""
                        , optPerceptron = const P.lp
                        , optSigma = 1.0
                        , optOutput = writeFile "labels.txt"
@@ -31,11 +31,17 @@ startOptions = Options { optVerbose = False
 
 options :: [OptDescr (Options -> IO Options)]
 options =
-  [ Option "i" ["input"]
+  [ Option "i" ["vectors"]
     (ReqArg
       (\arg opt -> return opt { optInputVectors = readFile arg })
       "FILE")
     "Input vectors"
+
+  , Option "l" ["labels"]
+    (ReqArg
+      (\arg opt -> return opt { optInputLabels = readFile arg })
+      "FILE")
+    "Input labels"
 
   , Option "p" ["perc"]
     (ReqArg

@@ -36,7 +36,10 @@ main = do
               } = opts 
 
   when verbose (hPutStrLn stderr "# Parsing vectors and labels")
-  vs <- fmap (map (V.fromList . map (\x -> read [x] :: Integer)) . lines) inputVectors
-  ls <- fmap (map (map (\x -> read [x] :: Integer)) . lines) inputLabels
+  vs <- fmap (map (V.fromList . map (\x -> read [x] :: Double)) . lines) inputVectors
+  ls <- fmap (map (\x -> read x :: Int) . lines) inputLabels
   let examples = zip vs ls
   when verbose (hPutStrLn stderr $ show examples)
+  let (State (w:_) _) = perceptron sigma examples
+  when verbose (do hPutStrLn stderr "# Learned weight vector"
+                   hPutStrLn stderr $ show w)
