@@ -26,7 +26,8 @@ startOptions = Options { optVerbose = False
                        , optInputLabels = return ""
                        , optPerceptron = const P.lp
                        , optSigma = 1.0
-                       , optOutput = writeFile "labels.txt"
+                       --, optOutput = writeFile "labels.txt"
+                       , optOutput = putStrLn
                        }
 
 options :: [OptDescr (Options -> IO Options)]
@@ -47,8 +48,9 @@ options =
     (ReqArg
       (\arg opt -> return opt { optPerceptron = case arg of
                                   "lp"     -> const P.lp
+                                  "lp2"    -> const P.lp2
                                   "gp"     -> P.gp })
-      "lp|gp")
+      "lp|lp2|gp")
     "Perceptron algorithm"
 
   , Option "s" ["sigma"]

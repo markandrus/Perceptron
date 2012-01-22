@@ -42,26 +42,28 @@ lp' state xys = foldl (\s@(State (w:_) _) (x, y) ->
 -- |Linear perceptron (starting from initial State)
 -- Takes one argument: a list of vector/classification tuples
 lp :: [(V.Vector Double, Int)] -> State
-lp xys = lp' (State [zeros $ length xys] []) xys
+lp xys = lp' (State [zeros . V.length . fst $ head xys] []) xys
 
 {- Kernel perceptron implementation -}
 
 -- |Kernel perceptron
 -- Takes three arguments: a kernel, State, and a list of vector/classification tuples
-kp' :: (t -> t -> Double) -> State -> [(t, Int)] -> State
-kp' k state xys = snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
+kp' :: (V.Vector Double -> V.Vector Double -> Double) -> State -> [(V.Vector Double, Int)] -> State
+kp' k state xys = makeW . snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
   let y' = fromEnum (f c t >= 0) in
     if y'==0 && y==1 then (t+1, nextState s (c `V.snoc` 1) (y,y'))
     else if y'==1 && y==0 then (t+1, nextState s (c `V.snoc` (-1)) (y,y'))
     else (t+1, nextState s (c `V.snoc` 0) (y,y'))
   ) (0, state) xys where
+  makeW (State (cs:_) pts) = State [(foldl (\z x -> V.zipWith (+) x z) cx cxs)] pts where
+    cx:cxs = map (\(c, x) -> V.map (\x' -> c * x') x) $ zip (V.toList cs) xs
   xs = fst $ unzip xys
-  f c t = sum . zipWith (*) (V.toList c) . map (`k` xt) $ take t xs where xt = xs !! t
+  f c t = sum . zipWith (*) (V.toList c) $ map (`k` xt) xs where xt = xs !! t
 
 -- |Kernel perceptron  (starting from initial State)
 -- Takes two arguments: a kernel and a list of vector/classification tuples
-kp :: (t -> t -> Double) -> [(t, Int)] -> State
-kp k xys = kp' k (State [zeros $ length xys] []) xys
+kp :: (V.Vector Double -> V.Vector Double -> Double) -> [(V.Vector Double, Int)] -> State
+kp k xys = kp' k (State [V.empty] []) xys
 
 {- Kernels -}
 
