@@ -1,5 +1,5 @@
 module Perceptron (State(..), flattenState, lp, lp', kp, kp', lp2, lp2', gp, gp') where
- 
+
 import qualified Data.Vector as V
 
 -- |State holds a learned or initialized weight vector and a list of prediction/truth tuples
@@ -15,7 +15,7 @@ nextState (State ws pts) w pt = State (w:ws) (pt:pts)
 
 -- |flattenState throws away our State's history for simplicity
 flattenState :: State -> State
-flattenState (State (w:ws) (pt:pts)) = State [w] [pt]
+flattenState (State (w:_) (pt:_)) = State [w] [pt]
 
 -- |Vector of zeros
 -- It takes one argument for the vector dimension, of type 'Int'
@@ -55,7 +55,7 @@ kp' k state xys = makeW . snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
     else if y'==1 && y==0 then (t+1, nextState s (c `V.snoc` (-1)) (y,y'))
     else (t+1, nextState s (c `V.snoc` 0) (y,y'))
   ) (0, state) xys where
-  makeW (State (cs:_) pts) = State [(foldl (\z x -> V.zipWith (+) x z) cx cxs)] pts where
+  makeW (State (cs:_) pts) = State [foldl (V.zipWith (+)) cx cxs] pts where
     cx:cxs = map (\(c, x) -> V.map (\x' -> c * x') x) $ zip (V.toList cs) xs
   xs = fst $ unzip xys
   f c t = sum . zipWith (*) (V.toList c) $ map (`k` xt) xs where xt = xs !! t
@@ -63,9 +63,13 @@ kp' k state xys = makeW . snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
 -- |Kernel perceptron  (starting from initial State)
 -- Takes two arguments: a kernel and a list of vector/classification tuples
 kp :: (V.Vector Double -> V.Vector Double -> Double) -> [(V.Vector Double, Int)] -> State
-kp k xys = kp' k (State [V.empty] []) xys
+kp k = kp' k (State [V.empty] [])
 
 {- Kernels -}
+
+-- |Linear kernel
+linear :: Num a => V.Vector a -> V.Vector a -> a
+linear = dot
 
 -- |Guassian kernel
 -- Takes three arguments: sigma, and two Vectors
@@ -77,11 +81,11 @@ gaussian sigma x x' = exp $ (eucNorm (V.zipWith (-) x x') ** 2) / (2 * (sigma **
 
 -- |Linear perceptron in terms of the kernel perceptron
 lp2' :: State -> [(V.Vector Double, Int)] -> State
-lp2' = kp' dot
+lp2' = kp' linear
 
 -- |Linear perceptron in terms of the kernel perceptron (starting from initial State)
 lp2 :: [(V.Vector Double, Int)] -> State
-lp2 = kp dot
+lp2 = kp linear
 
 -- |Guassian kernel perceptron
 -- Takes three arguments: sigma, State, and a list of vector/classification tuples

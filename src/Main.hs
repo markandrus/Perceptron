@@ -36,11 +36,11 @@ main = do
   ls <- fmap (map (\x -> fromEnum $ (read x :: Int) > 0) . lines) inputLabels
   let examples = zip vs ls
   let n = V.length . fst $ head examples
-  when verbose (hPutStrLn stderr $ "# Counted " ++ (show $ length examples) ++ " examples of "
-                                ++ (show n) ++ "-dimensional vectors")
+  when verbose (hPutStrLn stderr $ "# Counted " ++ show (length examples) ++ " examples of "
+                                ++ show n ++ "-dimensional vectors")
   let (P.State ws@(w:_) pts) = perceptron sigma examples
   let n = V.length w
-  when verbose (do hPutStrLn stderr $ "# Learned " ++ (show n) ++ "-dimensional weight vector:"
+  when verbose (do hPutStrLn stderr $ "# Learned " ++ show n ++ "-dimensional weight vector:"
                    hPutStrLn stderr . show $ V.toList w)
   let mistakes = foldl (\c (y,y') -> if y /= y' then c+1 else c) 0 pts
-  when verbose (hPutStrLn stderr $ "# Made " ++ (show mistakes) ++ " mistakes")
+  when verbose (hPutStrLn stderr $ "# Made " ++ show mistakes ++ " mistakes")
