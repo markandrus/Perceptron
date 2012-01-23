@@ -1,6 +1,7 @@
 module Perceptron (State(..), flattenState, lp, lp', kp, kp', lp2, lp2', gp, gp') where
 
 import qualified Data.Vector as V
+import Data.List (inits)
 
 -- |State holds a learned or initialized weight vector and a list of prediction/truth tuples
 -- It is helpful to thread State through our learning algorithms so that we can see how our
@@ -32,12 +33,11 @@ dot ws vs = V.sum $ V.zipWith (*) ws vs
 -- Takes two arguments: State and a list of vector/classification tuples
 -- Returns State
 lp' :: State -> [(V.Vector Double, Int)] -> State
-lp' state xys = foldl (\s@(State (w:_) _) (x, y) ->
+lp' = foldl (\s@(State (w:_) _) (x, y) ->
   let y' = fromEnum (w `dot` x >= 0) in
     if y'==0 && y==1 then nextState s (V.zipWith (+) w x) (y,y')
     else if y'==1 && y==0 then nextState s (V.zipWith (-) w x) (y,y')
-    else nextState s w (y,y')
-  ) state xys where
+    else nextState s w (y,y'))
 
 -- |Linear perceptron (starting from initial State)
 -- Takes one argument: a list of vector/classification tuples
@@ -50,7 +50,7 @@ lp xys = lp' (State [zeros . V.length . fst $ head xys] []) xys
 -- Takes three arguments: a kernel, State, and a list of vector/classification tuples
 kp' :: (V.Vector Double -> V.Vector Double -> Double) -> State -> [(V.Vector Double, Int)] -> State
 kp' k state xys = makeW . snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
-  let y' = fromEnum (f c t >= 0) in
+  let y' = fromEnum (f c x t >= 0) in
     if y'==0 && y==1 then (t+1, nextState s (c `V.snoc` 1) (y,y'))
     else if y'==1 && y==0 then (t+1, nextState s (c `V.snoc` (-1)) (y,y'))
     else (t+1, nextState s (c `V.snoc` 0) (y,y'))
@@ -58,7 +58,8 @@ kp' k state xys = makeW . snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
   makeW (State (cs:_) pts) = State [foldl (V.zipWith (+)) cx cxs] pts where
     cx:cxs = map (\(c, x) -> V.map (\x' -> c * x') x) $ zip (V.toList cs) xs
   xs = fst $ unzip xys
-  f c t = sum . zipWith (*) (V.toList c) $ map (`k` xt) xs where xt = xs !! t
+  xss = V.map V.fromList . V.unsafeTail . V.fromList $ inits xs
+  f c xt t = V.sum $ V.zipWith (\c x -> c * (x `k` xt)) c (xss V.! t)
 
 -- |Kernel perceptron  (starting from initial State)
 -- Takes two arguments: a kernel and a list of vector/classification tuples
