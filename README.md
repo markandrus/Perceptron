@@ -22,11 +22,11 @@ Kernels
 Kernels may be specified with the `-p` or `-perc` flags. The flags and their corresponding kernels
 are listed below:
 
-Flag  | Perceptron/Kernel
-------|--------------------------
-`lp`  | linear perceptron
-`lp2` | dot product/linear kernel
-`gp`  | Gaussian kernel
+Flag  | Kernel          | Perceptron
+------|-----------------|------------
+`lp`  |                 | Linear
+`lp2` | Dot product     | Kernel
+`gp`  | Gaussian kernel | Kernel
 
 Tests
 -----

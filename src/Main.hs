@@ -15,13 +15,6 @@ import qualified Data.Vector as V
 import Options
 import qualified Perceptron as P
 
--- From the Control.Functor.Zip package
-class Functor f => Zip f where
-  fzip :: f a -> f b -> f (a, b)
-  fzip = fzipWith (,)
-  fzipWith :: (a -> b -> c) -> f a -> f b -> f c
-  fzipWith f as bs = fmap (uncurry f) (fzip as bs)
-
 {- Main -}
 
 main :: IO ()
