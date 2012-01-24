@@ -1,7 +1,11 @@
 module Perceptron (State(..), flattenState, lp, lp', kp, kp', lp2, lp2', gp, gp') where
 
+import qualified Data.MemoCombinators as M
 import qualified Data.Vector as V
 import Data.List (inits)
+
+mVectorInt = M.wrap (V.fromList) (V.toList) (M.list M.integral)
+mVectorInt2 = M.memo2 (mVectorInt) (mVectorInt)
 
 -- |State holds a learned or initialized weight vector and a list of prediction/truth tuples
 -- It is helpful to thread State through our learning algorithms so that we can see how our
@@ -62,7 +66,8 @@ kp' k state xys = makeW . snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
   -- NOTE: The if statement below keeps us from computing x `k` xt when unnecessary. On our 2000-
   --       element training set, with the conditional we spend %40 less time computing k, and our
   --       total execution time is 3.5 times faster
-  f c xt t = V.sum $ V.zipWith (\c x -> if c==0 then 0 else c * (x `k` xt)) c (xss V.! t)
+  k' = mVectorInt2 k
+  f c xt t = V.sum $ V.zipWith (\c x -> if c==0 then 0 else c * (x `k'` xt)) c (xss V.! t)
 
 -- |Kernel perceptron  (starting from initial State)
 -- Takes two arguments: a kernel and a list of vector/classification tuples

@@ -48,8 +48,8 @@ options =
     (ReqArg
       (\arg opt -> return opt { optPerceptron = case arg of
                                   "lp"     -> const P.lp
-                                  "lp2"    -> const P.lp2
-                                  "gp"     -> P.gp })
+                                  "lp2"    -> const P.lp2 })
+--                                  "gp"     -> P.gp })
       "lp|lp2|gp")
     "Perceptron algorithm"
 
