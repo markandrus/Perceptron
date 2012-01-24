@@ -15,7 +15,7 @@ import qualified Perceptron as P
 data Options = Options { optVerbose :: Bool
                        , optInputVectors :: IO String
                        , optInputLabels :: IO String
-                       , optPerceptron :: Double -> [(V.Vector Double, Int)] -> P.State
+                       , optPerceptron :: Double -> [(V.Vector Int, Int)] -> P.State
                        , optSigma :: Double
                        , optOutput :: String -> IO ()
                        }

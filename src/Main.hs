@@ -31,7 +31,7 @@ main = do
               } = opts 
 
   when verbose (hPutStrLn stderr "# Parsing vectors and labels")
-  vs <- fmap ( map (V.fromList . map (\x -> read [x] :: Double) . filter (/= ' '))
+  vs <- fmap ( map (V.fromList . map (\x -> read [x] :: Int) . filter (/= ' '))
              . lines) inputVectors
   ls <- fmap (map (\x -> fromEnum $ (read x :: Int) > 0) . lines) inputLabels
   let examples = zip vs ls
