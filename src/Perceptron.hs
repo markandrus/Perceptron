@@ -59,6 +59,9 @@ kp' k state xys = makeW . snd $ foldl (\(t, s@(State (c:_) _)) (x, y) ->
     cx:cxs = map (\(c, x) -> V.map (\x' -> c * x') x) $ zip (V.toList cs) xs
   xs = fst $ unzip xys
   xss = V.map V.fromList . V.unsafeTail . V.fromList $ inits xs
+  -- NOTE: The if statement below keeps us from computing x `k` xt when unnecessary. On our 2000-
+  --       element training set, with the conditional we spend %40 less time computing k, and our
+  --       total execution time is 3.5 times faster
   f c xt t = V.sum $ V.zipWith (\c x -> if c==0 then 0 else c * (x `k` xt)) c (xss V.! t)
 
 -- |Kernel perceptron  (starting from initial State)
