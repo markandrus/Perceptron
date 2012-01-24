@@ -56,17 +56,14 @@ kp' k state xys = makeW . snd $ foldl (\(t, s@(State (cs:_) _)) (xs,y) ->
     else (t+1, nextState s (cs `V.snoc` 0) (y,y'))
   ) (0, state) xys where
   makeW (State (cs:_) pts) = State [foldl (V.zipWith (+)) cx cxs] pts where
-    -- NOTE: Calculating zeroV once rather than mapping (0*) over a vector yields ~200 ms decrease
-    --       in execution time over our 2000-element training set
+    -- NOTE: Calculating zeroV once rather than zeroing a vector decreases execution time for kp'
+    --       by 0.7%, yielding ~200 ms decrease in execution time for our 2000-element training set
     cx:cxs = map (\(c,x) -> if c==0 then zeroV else V.map (\x' -> c * x') x) $ zip (V.toList cs) xs
     zeroV = zeros . V.length $ head xs
   -- NOTE: The if statement below keeps us from computing x `k` xt when unnecessary. On our 2000-
   --       element training set, with the conditional we spend %40 less time computing k, and our
   --       total execution time is 3.5 times faster
   f cs xt t = V.sum $ V.zipWith (\c x -> if c==0 then 0 else c * (x `k` xt)) cs (xss V.! t)
-  -- NOTE: I also considered memoizing calls to the kernel using Data.MemoCombinators. After
-  --       writing a simple wrapper for Data.Vector Int, I noticed that it took way more time and
-  --       space, since the vectors passed to the kernel are typically unique and not memoizable
   xs = fst $ unzip xys
   xss = V.map V.fromList . V.unsafeTail . V.fromList $ inits xs
 
