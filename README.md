@@ -22,6 +22,8 @@ Usage
 		-C                  --cross-validate            Cross validate from 90%/10% to 10%/90%
 		-N INT              --cross-validate-count=INT  Number of tests to run before averaging
 
+Typical execution looks like `$ ./bin/perc -t data/train2k.databw.35 -l data/train2k.label.35 -i data/test200.databw.35 -c gp -p gp -s 0.9 -v -o out/test200.label.kernel.35`.
+
 Classifiers/Predictors
 ----------------------
 Kernels may be specified with the `-c`/`-class` and `-p`/`--pred` flags. The flags and their
@@ -51,5 +53,14 @@ QuickCheck to confirm that
 
 Observations
 ------------
+### Choosing `sigma`
+The graphs included in `/graphs` show that, for the Guassian kernel perceptron, a value for `sigma`
+of `0.9` yields best results without overfitting. The tent-like shape in the graph shows this.
+
+### Code
 See the source for `src/Perceptron.hs` to observe some of the performance considerations I've made.
 I try to touch each element of the data set as few times as possible.
+
+Note
+----
+My graphs are in `graphs` and my output predictions are in `out`.
