@@ -35,13 +35,13 @@ Flag  | Kernel          | Perceptron
 
 Tests
 -----
-# Cross Validation
+### Cross Validation
 The `-C`/`--cross-validate` triggers the cross validation suite. Given a number of times to
 average randomized shuffles of the input data, `-N`/`--cross-validate-count`, the cross validator
 will execute the perceptron using first 10% of the training data as test data, up to 90% of the 
 training data as test data.
 
-# QuickCheck
+### QuickCheck
 You can run `make test` from the `Makefile`--this executes `runhaskell Tests.hs`. The test runs
 QuickCheck to confirm that
 
