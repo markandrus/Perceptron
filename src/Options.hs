@@ -13,57 +13,72 @@ import qualified Data.Vector as V
 import qualified Perceptron as P
 
 data Options = Options { optVerbose :: Bool
+                       , optInputTrainingVectors :: IO String
+                       , optInputTrainingLabels :: IO String
                        , optInputVectors :: IO String
-                       , optInputLabels :: IO String
-                       , optPerceptron :: Double -> [(V.Vector Double, Int)] -> P.State
+                       , optClassifier :: Double -> [(V.Vector Double, Int)] -> P.State
                        , optSigma :: Double
-                       , optOutput :: String -> IO ()
+                       , optOutputWeight :: String -> IO ()
+                       , optOutputPredictions :: String -> IO ()
                        }
 
 startOptions :: Options
 startOptions = Options { optVerbose = False
+                       , optInputTrainingVectors = return ""
+                       , optInputTrainingLabels = return ""
                        , optInputVectors = return ""
-                       , optInputLabels = return ""
-                       , optPerceptron = const P.lp
+                       , optClassifier = const P.lp
                        , optSigma = 1.0
-                       --, optOutput = writeFile "labels.txt"
-                       , optOutput = putStrLn
+                       , optOutputWeight = \x -> return ()
+                       , optOutputPredictions = \x -> return ()
                        }
 
 options :: [OptDescr (Options -> IO Options)]
 options =
-  [ Option "i" ["vectors"]
+  [ Option "t" ["in-train-vecs"]
+    (ReqArg
+      (\arg opt -> return opt { optInputTrainingVectors = readFile arg })
+      "FILE")
+    "Input training vectors"
+
+  , Option "l" ["in-train-labels"]
+    (ReqArg
+      (\arg opt -> return opt { optInputTrainingLabels = readFile arg })
+      "FILE")
+    "Input training labels"
+
+  , Option "i" ["in-vecs"]
     (ReqArg
       (\arg opt -> return opt { optInputVectors = readFile arg })
       "FILE")
-    "Input vectors"
+    "Input vectors (to classify)"
 
-  , Option "l" ["labels"]
+  , Option "c" ["class"]
     (ReqArg
-      (\arg opt -> return opt { optInputLabels = readFile arg })
-      "FILE")
-    "Input labels"
-
-  , Option "p" ["perc"]
-    (ReqArg
-      (\arg opt -> return opt { optPerceptron = case arg of
+      (\arg opt -> return opt { optClassifier = case arg of
                                   "lp"     -> const P.lp
                                   "lp2"    -> const P.lp2
                                   "gp"     -> P.gp })
-      "lp|lp2|gp")
-    "Perceptron algorithm"
+      "[lp | lp2 | gp]")
+    "Classifier"
 
   , Option "s" ["sigma"]
     (ReqArg
       (\arg opt -> return opt { optSigma = read arg })
-      "FILE")
-    "Sigma value to use with Guassian perceptron"
+      "DOUBLE")
+    "Sigma value for Guassian kernel (gp)"
 
-  , Option "o" ["out"]
+  , Option "w" ["out-weight"]
     (ReqArg
-      (\arg opt -> return opt { optOutput = writeFile arg })
+      (\arg opt -> return opt { optOutputWeight = writeFile arg })
       "FILE")
-    "Output path"
+    "Output weight path"
+
+  , Option "o" ["out-preds"]
+    (ReqArg
+      (\arg opt -> return opt { optOutputPredictions = writeFile arg })
+      "FILE")
+    "Output predictions path"
 
   , Option "v" ["verbose"]
     (NoArg

@@ -1,7 +1,15 @@
-module Perceptron (State(..), flattenState, lp, lp', kp, kp', lp2, lp2', gp, gp') where
+module Perceptron (normalize, State(..), flattenState, lp, lp', kp, kp', lp2, lp2', gp, gp') where
 
 import qualified Data.Vector as V
 import Data.List (inits)
+
+-- |Calculate the L2-Norm of a vector
+norm :: Floating c => V.Vector c -> c
+norm vs = sqrt . V.sum $ V.map (**2) vs
+
+-- |Normalize a vector
+normalize :: Floating b => V.Vector b -> V.Vector b
+normalize vs = V.map (/m) vs where m = norm vs
 
 -- |State holds a learned or initialized weight vector and a list of prediction/truth tuples
 -- It is helpful to thread State through our learning algorithms so that we can see how our
@@ -81,7 +89,7 @@ linear = dot
 -- |Guassian kernel
 -- Takes three arguments: sigma, and two Vectors
 gaussian :: Floating a => a -> V.Vector a -> V.Vector a -> a
-gaussian sigma x x' = exp $ (eucNorm (V.zipWith (-) x x') ** 2) / (2 * (sigma ** 2)) where
+gaussian sigma x x' = exp $ (norm (V.zipWith (-) x x') ** 2) / (2 * (sigma ** 2)) where
   eucNorm vs = sqrt . V.sum $ V.map (**2) vs -- Euclidean norm of a vector
 
 {- Kernel perceptrons -}
