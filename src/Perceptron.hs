@@ -1,4 +1,7 @@
-module Perceptron (normalize, State(..), flattenState, lp, lp', kp, kp', lp2, lp2', gp, gp') where
+module Perceptron
+  ( normalize, State(..), flattenState, lpredict, lp, lp', kpredict, kp,
+    kp', lpredict2, lp2, lp2', gpredict, gp, gp', makeW
+  ) where
 
 import qualified Data.Vector as V
 import Data.List (inits)
@@ -37,6 +40,10 @@ dot ws vs = V.sum $ V.zipWith (*) ws vs
 
 {- Linear perceptron implementation -}
 
+-- |Predict given examples, xs, and weights, cs
+lpredict :: State -> t -> V.Vector Double -> Bool
+lpredict (State (ws:_) _) _ xt = 0 <= ws `dot` xt
+
 -- |Linear perceptron
 -- Takes two arguments: State and a list of vector/classification tuples
 -- Returns State
@@ -54,26 +61,28 @@ lp xys = lp' (State [zeros . V.length . fst $ head xys] []) xys
 
 {- Kernel perceptron implementation -}
 
+-- |Predict with kernel, k, given State with weights cs, examples, xs, vector, xt
+kpredict :: (V.Vector Double -> V.Vector Double -> Double) -> State -> [V.Vector Double] ->
+            V.Vector Double -> Bool
+kpredict k (State (cs:_) pts) xs xt =
+  0 <= (V.sum $ V.zipWith (\c x -> if c==0 then 0 else c * (x `k` xt)) cs $ V.fromList xs)
+
 -- |Kernel perceptron
 -- Takes three arguments: a kernel, State, and a list of vector/classification tuples
 kp' :: (V.Vector Double -> V.Vector Double -> Double) -> State -> [(V.Vector Double, Int)] -> State
-kp' k state xys = makeW . snd $ foldl (\(t, s@(State (cs:_) _)) (xs,y) ->
+-- kp' k state xys = makeW . snd $ foldl (\(t, s@(State (cs:_) _)) (xs,y) ->
+kp' k state xys = snd $ foldl (\(t, s@(State (cs:_) _)) (xs,y) ->
   let y' = fromEnum (f cs xs t >= 0) in
     if y'==0 && y==1 then (t+1, nextState s (cs `V.snoc` 1) (y,y'))
     else if y'==1 && y==0 then (t+1, nextState s (cs `V.snoc` (-1)) (y,y'))
     else (t+1, nextState s (cs `V.snoc` 0) (y,y'))
   ) (0, state) xys where
-  makeW (State (cs:_) pts) = State [foldl (V.zipWith (+)) cx cxs] pts where
-    -- NOTE: Calculating zeroV once rather than zeroing a vector decreases execution time for kp'
-    --       by 0.7%, yielding ~200 ms decrease in execution time for our 2000-element training set
-    cx:cxs = map (\(c,x) -> if c==0 then zeroV else V.map (\x' -> c * x') x) $ zip (V.toList cs) xs
-    zeroV = zeros . V.length $ head xs
   -- NOTE: The if statement below keeps us from computing x `k` xt when unnecessary. On our 2000-
   --       element training set, with the conditional we spend %40 less time computing k, and our
   --       total execution time is 3.5 times faster
   f cs xt t = V.sum $ V.zipWith (\c x -> if c==0 then 0 else c * (x `k` xt)) cs (xss V.! t)
   xs = fst $ unzip xys
-  xss = V.map V.fromList . V.unsafeTail . V.fromList $ inits xs
+  xss = V.map V.fromList . V.tail . V.fromList $ inits xs
 
 -- |Kernel perceptron  (starting from initial State)
 -- Takes two arguments: a kernel and a list of vector/classification tuples
@@ -94,6 +103,18 @@ gaussian sigma x x' = exp $ (norm (V.zipWith (-) x x') ** 2) / (2 * (sigma ** 2)
 
 {- Kernel perceptrons -}
 
+-- |Predict with linear kernel
+lpredict2 :: State -> [V.Vector Double] -> V.Vector Double -> Bool
+lpredict2 = kpredict linear
+
+-- |makeW lets you flatten the cs from lp2 to ws (as in lp)
+makeW :: State -> [V.Vector Double] -> State
+makeW (State (cs:_) pts) xs = State [foldl (V.zipWith (+)) cx cxs] pts where
+  -- NOTE: Calculating zeroV once rather than zeroing a vector decreases execution time for kp'
+  --       by 0.7%, yielding ~200 ms decrease in execution time for our 2000-element training set
+  cx:cxs = map (\(c,x) -> if c==0 then zeroV else V.map (\x' -> c * x') x) $ zip (V.toList cs) xs
+  zeroV = zeros . V.length $ head xs
+
 -- |Linear perceptron in terms of the kernel perceptron
 lp2' :: State -> [(V.Vector Double, Int)] -> State
 lp2' = kp' linear
@@ -101,6 +122,10 @@ lp2' = kp' linear
 -- |Linear perceptron in terms of the kernel perceptron (starting from initial State)
 lp2 :: [(V.Vector Double, Int)] -> State
 lp2 = kp linear
+
+-- |Predict with Gaussian kernel, given sigma
+gpredict :: Double -> State -> [V.Vector Double] -> V.Vector Double -> Bool
+gpredict sigma = kpredict (gaussian sigma)
 
 -- |Guassian kernel perceptron
 -- Takes three arguments: sigma, State, and a list of vector/classification tuples
