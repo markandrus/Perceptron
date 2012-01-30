@@ -49,6 +49,7 @@ main = do
               , optCrossValidate = crossValidate
               , optCrossValidateCount = crossValidateCount
               } = opts 
+
   {- Read Examples -}
   -- Normalized vectors
   vs <- fmap ( map (P.normalize . V.fromList . map (\x -> read [x] :: Double) . filter (/= ' '))
