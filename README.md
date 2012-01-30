@@ -33,4 +33,6 @@ Tests
 You can run `make test` from the `Makefile`--this executes `runhaskell Tests.hs`. The test confirms
 that
 
-1. `lp` and `lp2` produce the same results
+1. sorting the `shuffle` of a list is equal to the sort of the list (no elements lost)
+2. `lp` and `lp2` produce the same results
+3. `lpredict` and `lpredict2` produce the same results (linear and kernel prediction)
