@@ -17,9 +17,13 @@ data Options = Options { optVerbose :: Bool
                        , optInputTrainingLabels :: IO String
                        , optInputVectors :: IO String
                        , optClassifier :: Double -> [(V.Vector Double, Int)] -> P.State
+                       , optPredictor :: Double -> P.State -> [V.Vector Double] ->
+                                         V.Vector Double -> Bool
                        , optSigma :: Double
                        , optOutputWeight :: String -> IO ()
                        , optOutputPredictions :: String -> IO ()
+                       , optCrossValidate :: Bool
+                       , optCrossValidateCount :: Int
                        }
 
 startOptions :: Options
@@ -28,9 +32,12 @@ startOptions = Options { optVerbose = False
                        , optInputTrainingLabels = return ""
                        , optInputVectors = return ""
                        , optClassifier = const P.lp
-                       , optSigma = 1.0
+                       , optPredictor = const P.lpredict
+                       , optSigma = 5.0
                        , optOutputWeight = \x -> return ()
                        , optOutputPredictions = \x -> return ()
+                       , optCrossValidate = False
+                       , optCrossValidateCount = 1
                        }
 
 options :: [OptDescr (Options -> IO Options)]
@@ -62,6 +69,15 @@ options =
       "[lp | lp2 | gp]")
     "Classifier"
 
+  , Option "p" ["pred"]
+    (ReqArg
+      (\arg opt -> return opt { optPredictor = case arg of
+                                  "lp"     -> const P.lpredict
+                                  "lp2"    -> const P.lpredict2
+                                  "gp"     -> P.gpredict })
+      "[lp | lp2 | gp]")
+    "Predictor"
+
   , Option "s" ["sigma"]
     (ReqArg
       (\arg opt -> return opt { optSigma = read arg })
@@ -92,6 +108,17 @@ options =
              hPutStrLn stderr (usageInfo prg options)
              exitWith ExitSuccess))
     "Show help"
+  
+  , Option "C" ["cross-validate"]
+    (NoArg
+      (\opt -> return opt { optCrossValidate = True }))
+    "Cross validate from 90%/10% to 10%/90%"
+
+  , Option "N" ["cross-validate-count"]
+    (ReqArg
+      (\arg opt -> return opt { optCrossValidateCount = read arg })
+      "INT")
+    "Number of tests to run before averaging"
   ]
 
 parseOptions :: [String] -> IO Options
