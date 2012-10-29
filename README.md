@@ -1,6 +1,5 @@
 Linear & Kernel Perceptron
 ==========================
-By _Mark Roberts_ andrus@uchicago.edu
 
 This project implements a linear and kernel perceptron.
 
@@ -50,17 +49,3 @@ QuickCheck to confirm that
 1. sorting the `shuffle` of a list is equal to the sort of the list (no elements lost)
 2. `lp` and `lp2` produce the same results
 3. `lpredict` and `lpredict2` produce the same results (linear and kernel prediction)
-
-Observations
-------------
-### Choosing `sigma`
-The graphs included in `/graphs` show that, for the Guassian kernel perceptron, a value for `sigma`
-of `0.9` yields best results without overfitting. The tent-like shape in the graph shows this.
-
-### Code
-See the source for `src/Perceptron.hs` to observe some of the performance considerations I've made.
-I try to touch each element of the data set as few times as possible.
-
-Note
-----
-My graphs are in `graphs` and my output predictions are in `out`.
